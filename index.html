@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="referrer" content="no-referrer" />
   <title>LASTBAY — Built Step by Step, Person by Person.</title>
   <meta name="description" content="A long-term community project focused on structure, alignment, and sustainable growth. No hype. No rush. Just building." />
@@ -23,30 +23,9 @@
     /* ── Reset & Fonts ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
-      background: #080c10;
-      background-image: url('https://i.postimg.cc/g0GHBjVH/WA-1776523655869.jpg');
-      background-size: cover;
-      background-position: center top;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      color: #f0f8ff;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background: rgba(8,12,16,0.72);
-      z-index: 0;
-      pointer-events: none;
-    }
-    header, section, footer { position: relative; z-index: 1; }
-    a { text-decoration: none; color: inherit; }
 
-    img { display: block; max-width: 100%; }
     /* ── CSS Variables ─────────────────────────────────────── */
+    :root {
       --primary: #00f0ff;
       --primary-dim: rgba(0,240,255,0.15);
       --primary-glow: rgba(0,240,255,0.3);
@@ -59,6 +38,38 @@
       --muted: rgba(180,210,255,0.55);
       --radius: 1rem;
     }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      background: #080c10;
+      color: #f0f8ff;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      /* Background handled via pseudo-element to avoid mobile fixed-bg jank */
+    }
+
+    /* Full-page background — uses position:fixed pseudo so it never shifts on mobile */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: url('https://i.postimg.cc/g0GHBjVH/WA-1776523655869.jpg');
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      /* No background-attachment:fixed — causes iOS repaint/overflow bug */
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: rgba(8,12,16,0.72);
+      z-index: -1;
+      pointer-events: none;
+    }
+    header, section, footer { position: relative; z-index: 1; }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
 
     /* ── Utilities ─────────────────────────────────────────── */
     .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
@@ -728,6 +739,9 @@
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 0.875rem;
       transition: all 0.3s;
+      /* Fix: ensure number stays centred and not clipped */
+      line-height: 1;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
     }
     .roadmap-dot.active {
       background: var(--primary); color: #080c10;
@@ -738,6 +752,7 @@
     @media (min-width: 768px) {
       .roadmap-dot { left: 50%; transform: translateX(-50%); }
     }
+    .roadmap-card {
       padding: 1.5rem; border-radius: var(--radius);
       background: var(--surface); border: 1px solid var(--border);
       backdrop-filter: blur(4px); transition: all 0.3s;
@@ -879,9 +894,6 @@
       height: 100%; border-radius: 9999px;
       transition: width 1.2s cubic-bezier(0.16,1,0.3,1);
     }
-
-    /* ── SVG Icons inline ──────────────────────────────────── */
-    /* Used inline via JS */
   </style>
 </head>
 <body>
@@ -978,7 +990,6 @@
     <p class="hero-sub">
       LASTBAY was not built overnight. It started as a small idea and has been growing step by step for over two months. Instead of chasing hype, we focused on building a strong foundation — person by person, holder by holder. Most early holders came from a close and trusted circle. People who were not even part of crypto before, but joined because they believed in the vision. No artificial hype, no forced growth, no pump-and-dump mentality. Every step forward is organic. The goal is simple: build a stable and trustworthy project that can grow naturally over time.
     </p>
-
 
   </div>
 </section>
@@ -1233,37 +1244,37 @@
         <div class="tknomics-rows">
           <div class="tknomics-row">
             <span class="tknomics-row-label">Total Supply</span>
-            <span class="tknomics-row-val cyan">1,000 LB</span>
+            <span class="tknomics-row-val cyan" id="tkTotalSupply">1,000 LB</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Burned</span>
-            <span class="tknomics-row-val fire">~53.7% 🔥</span>
+            <span class="tknomics-row-val fire" id="tkBurned">~53.7% 🔥</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Circulating Supply</span>
-            <span class="tknomics-row-val">~463 LB</span>
+            <span class="tknomics-row-val" id="tkCirculating">~463 LB</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Market Cap</span>
-            <span class="tknomics-row-val cyan">~$101K</span>
+            <span class="tknomics-row-val cyan" id="tkMcap">~$101K</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Liquidity</span>
-            <span class="tknomics-row-val green">~$6.1K</span>
+            <span class="tknomics-row-val green" id="tkLiq">~$6.1K</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Holders</span>
-            <span class="tknomics-row-val">~48</span>
+            <span class="tknomics-row-val" id="tkHolders">~48</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">24h Volume</span>
-            <span class="tknomics-row-val cyan">~$200+</span>
+            <span class="tknomics-row-val cyan" id="tkVol">~$200+</span>
           </div>
         </div>
       </div>
 
       <div data-sr="right">
-        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.75rem">Distribution</h3>
+        <h3 style="font-weight:700;margin-bottom:1.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-size:0.75rem">Distribution</h3>
         <div class="dist-bars">
           <div class="dist-bar-row">
             <div class="dist-bar-top">
@@ -1430,7 +1441,7 @@
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.213 5.567zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         </a>
         <a href="https://t.me/+DOkcJPW6vmQyNGZk" target="_blank" rel="noreferrer" class="footer-social">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
         </a>
       </div>
     </div>
@@ -1467,35 +1478,19 @@ document.querySelectorAll('.mobile-link').forEach(el => {
   el.addEventListener('click', () => mobileMenu.classList.remove('open'));
 });
 
-// ── Hero logo float ─────────────────────────────────────────
-document.querySelector('.hero-float').classList.add('hero-float');
-(function animFloat() {
-  const el = document.querySelector('.hero-float');
-  let t = 0;
-  function tick() {
-    t += 0.008;
-    el.style.transform = `translateY(${Math.sin(t) * 14}px)`;
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-})();
+// ── Scroll reveal ────────────────────────────────────────────
+const srEls = document.querySelectorAll('[data-sr]');
+const srObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      srObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+srEls.forEach(el => srObs.observe(el));
 
-// ── Scroll reveal ───────────────────────────────────────────
-function initScrollReveal() {
-  const els = document.querySelectorAll('[data-sr], [data-stagger]');
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('visible');
-        obs.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-  els.forEach(el => obs.observe(el));
-}
-initScrollReveal();
-
-// ── Copy address ────────────────────────────────────────────
+// ── Copy helper ─────────────────────────────────────────────
 function setupCopy(btnId, text, displayEl) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
@@ -1650,9 +1645,9 @@ function generateFallbackCandles(period) {
   const count = period === '1h' ? 60 : period === '4h' ? 48 : period === '1d' ? 30 : 12;
   const intervalMs = { '1h':60000,'4h':14400000,'1d':86400000,'1w':604800000 }[period];
   const now = Date.now();
-  const candles = []; let price = 0.000012;
+  const candles = []; let price = STATIC.price || 0.000012;
   for (let i = count - 1; i >= 0; i--) {
-    const change = (Math.random() - 0.48) * 0.0000012;
+    const change = (Math.random() - 0.48) * price * 0.08;
     const open = price;
     price = Math.max(0.000001, price + change);
     candles.push({ time: Math.floor((now - i * intervalMs) / 1000), close: price, open, high: Math.max(open,price)*1.02, low: Math.min(open,price)*0.98, volume: Math.random()*500+50 });
@@ -1665,13 +1660,18 @@ async function loadChart(period) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
 
   try {
-    // DeDust chart endpoint (may have CORS, fallback gracefully)
-    const endpoints = [
-      `https://api.dedust.io/v2/pools/${CA}/chart?period=${period}`,
-      `https://api.dedust.io/v2/pools/${CA}/chart?interval=${period === '1h' ? 1 : period === '4h' ? 4 : period === '1d' ? 1440 : 10080}`,
-    ];
+    // Try GeckoTerminal OHLCV for real candle data
+    const gtNetworkMap = { '1h': 'minute&aggregate=1', '4h': 'minute&aggregate=5', '1d': 'hour&aggregate=1', '1w': 'day&aggregate=1' };
+    const gtTimeframe = gtNetworkMap[period] || 'hour&aggregate=1';
+    const gtLimit = period === '1h' ? 60 : period === '4h' ? 48 : period === '1d' ? 24 : 30;
+
     let candles = null;
-    for (const url of endpoints) {
+
+    // DeDust chart endpoint
+    const deDustEndpoints = [
+      `https://api.dedust.io/v2/pools/${CA}/chart?period=${period}`,
+    ];
+    for (const url of deDustEndpoints) {
       try {
         const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
         if (r.ok) {
@@ -1683,6 +1683,22 @@ async function loadChart(period) {
         }
       } catch { /* try next */ }
     }
+
+    // GeckoTerminal fallback for chart data
+    if (!candles || candles.length === 0) {
+      try {
+        const gtUrl = `https://api.geckoterminal.com/api/v2/networks/ton/tokens/${CA}/ohlcv/${gtTimeframe.split('&')[0]}?aggregate=${gtTimeframe.split('=')[1]}&limit=${gtLimit}&currency=usd`;
+        const r = await fetch(gtUrl, { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } });
+        if (r.ok) {
+          const d = await r.json();
+          const ohlcv = d?.data?.attributes?.ohlcv_list;
+          if (Array.isArray(ohlcv) && ohlcv.length > 0) {
+            candles = ohlcv.reverse().map(c => ({ time: Math.floor(c[0] / 1000), open: c[1], high: c[2], low: c[3], close: c[4], volume: c[5] }));
+          }
+        }
+      } catch { /* fallback */ }
+    }
+
     if (!candles || candles.length === 0) candles = generateFallbackCandles(period);
 
     const prices = candles.map(c => c.close);
@@ -1711,7 +1727,6 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 
 // ── API fetching ─────────────────────────────────────────────
 
-// Try multiple CORS-friendly endpoints for price data
 async function fetchTONAPI() {
   try {
     const r = await fetch(`https://tonapi.io/v2/jettons/${CA}`, { signal: AbortSignal.timeout(8000) });
@@ -1723,22 +1738,59 @@ async function fetchTONAPI() {
       logoUrl: d.metadata?.image ?? LOGO,
       mintable: d.mintable ?? true,
       adminAddress: d.admin?.address ?? '',
+      totalSupply: d.total_supply ?? null,
+    };
+  } catch { return null; }
+}
+
+async function fetchGeckoTerminal() {
+  try {
+    const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/ton/tokens/${CA}`, {
+      signal: AbortSignal.timeout(8000),
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const attrs = d?.data?.attributes;
+    if (!attrs) return null;
+    return {
+      price: parseFloat(attrs.price_usd ?? '0') || 0,
+      marketCap: parseFloat(attrs.market_cap_usd ?? '0') || 0,
+      fdv: parseFloat(attrs.fdv_usd ?? '0') || 0,
+      volume24h: parseFloat(attrs.volume_usd?.h24 ?? '0') || 0,
+      priceChange24h: parseFloat(attrs.price_change_percentage?.h24 ?? '0') || 0,
     };
   } catch { return null; }
 }
 
 async function fetchDeDustPools() {
   try {
-    const r = await fetch(`https://api.dedust.io/v2/pools`, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) return null;
-    const pools = await r.json();
-    const pool = pools.find(p => p.assets?.some(a => a.address === CA));
-    if (!pool) return null;
-    const tonRes = parseFloat(pool.reserves?.[0] ?? '0') / 1e9;
-    const tokRes = parseFloat(pool.reserves?.[1] ?? '0') / 1e9;
+    // Try direct pool endpoint first (faster)
+    const r = await fetch(`https://api.dedust.io/v2/pools?assets=${CA}`, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const pools = await r.json();
+      const pool = Array.isArray(pools) ? pools.find(p => p.assets?.some(a => a.address === CA)) : null;
+      if (pool) {
+        const tonRes = parseFloat(pool.reserves?.[0] ?? '0') / 1e9;
+        const tokRes = parseFloat(pool.reserves?.[1] ?? '0') / 1e9;
+        const price = tokRes > 0 ? tonRes / tokRes : 0;
+        const liq = tonRes * 2;
+        const vol = pool.stats?.volume?.amount ? parseFloat(pool.stats.volume.amount) / 1e9 : 0;
+        return { price, liquidity: liq, volume24h: vol };
+      }
+    }
+
+    // Fallback: search all pools
+    const r2 = await fetch(`https://api.dedust.io/v2/pools`, { signal: AbortSignal.timeout(10000) });
+    if (!r2.ok) return null;
+    const pools2 = await r2.json();
+    const pool2 = pools2.find(p => p.assets?.some(a => a.address === CA));
+    if (!pool2) return null;
+    const tonRes = parseFloat(pool2.reserves?.[0] ?? '0') / 1e9;
+    const tokRes = parseFloat(pool2.reserves?.[1] ?? '0') / 1e9;
     const price = tokRes > 0 ? tonRes / tokRes : 0;
     const liq = tonRes * 2;
-    const vol = pool.stats?.volume?.amount ? parseFloat(pool.stats.volume.amount) / 1e9 : 0;
+    const vol = pool2.stats?.volume?.amount ? parseFloat(pool2.stats.volume.amount) / 1e9 : 0;
     return { price, liquidity: liq, volume24h: vol };
   } catch { return null; }
 }
@@ -1779,7 +1831,6 @@ function renderStats(data) {
   const liqEl = document.getElementById('statLiq');
   const volEl = document.getElementById('statVol');
 
-  // Count up from 0
   if (data.price > 0) {
     priceEl.textContent = '';
     const span = document.createElement('span');
@@ -1840,6 +1891,28 @@ function renderStats(data) {
   if (data.symbol) document.getElementById('tokenSymbol').textContent = data.symbol;
   // Logo
   if (data.logoUrl) document.getElementById('tokenLogo').src = data.logoUrl;
+
+  // Update tokenomics section with live data
+  updateTokenomics(data);
+}
+
+function updateTokenomics(data) {
+  if (data.marketCap > 0) {
+    const el = document.getElementById('tkMcap');
+    if (el) el.textContent = fmtK(data.marketCap);
+  }
+  if (data.liquidity > 0) {
+    const el = document.getElementById('tkLiq');
+    if (el) el.textContent = fmtK(data.liquidity);
+  }
+  if (data.holders > 0) {
+    const el = document.getElementById('tkHolders');
+    if (el) el.textContent = '~' + data.holders;
+  }
+  if (data.volume24h > 0) {
+    const el = document.getElementById('tkVol');
+    if (el) el.textContent = fmtK(data.volume24h);
+  }
 }
 
 function renderLockCard(tonApiData) {
@@ -1974,36 +2047,48 @@ renderPlatforms(STATIC);
 // ── Main data fetch ──────────────────────────────────────────
 
 async function fetchAllData() {
-  const [tonApi, deDust, stonFi] = await Promise.allSettled([
+  const [tonApi, gecko, deDust, stonFi] = await Promise.allSettled([
     fetchTONAPI(),
+    fetchGeckoTerminal(),
     fetchDeDustPools(),
     fetchSTONFi(),
   ]);
 
   const ton = tonApi.status === 'fulfilled' ? tonApi.value : null;
-  const dd = deDust.status === 'fulfilled' ? deDust.value : null;
-  const sf = stonFi.status === 'fulfilled' ? stonFi.value : null;
+  const gt  = gecko.status  === 'fulfilled' ? gecko.value  : null;
+  const dd  = deDust.status === 'fulfilled' ? deDust.value : null;
+  const sf  = stonFi.status === 'fulfilled' ? stonFi.value : null;
 
-  const price = dd?.price ?? STATIC.price;
-  const totalSupply = 1_000_000_000;
-  const marketCap = price * totalSupply || STATIC.marketCap;
-  const deDustLiq = dd?.liquidity ?? STATIC.deDustLiq;
+  // Best price: GeckoTerminal first (USD), then DeDust (needs TON price), then static
+  // For DeDust we need TON price; approximate from GT or use 1 TON ≈ $5 as rough estimate
+  const tonPriceUsd = 5; // rough — DeDust price is in TON, multiply
+  const ddPriceUsd = dd?.price ? dd.price * tonPriceUsd : 0;
+  const price = gt?.price || ddPriceUsd || STATIC.price;
+
+  const deDustLiq = dd?.liquidity ? dd.liquidity * tonPriceUsd : STATIC.deDustLiq;
   const stonFiLiq = sf?.liquidity ?? STATIC.stonFiLiq;
-  const liquidity = (deDustLiq + stonFiLiq) || STATIC.liquidity;
-  const volume24h = ((dd?.volume24h ?? 0) + (sf?.volume24h ?? 0)) || STATIC.volume24h;
+  const liquidity = gt?.fdv ? (deDustLiq + stonFiLiq) || STATIC.liquidity
+                             : (deDustLiq + stonFiLiq) || STATIC.liquidity;
+
+  const deDustVol = dd?.volume24h ? dd.volume24h * tonPriceUsd : STATIC.deDustVolume;
+  const stonFiVol = sf?.volume24h ?? STATIC.stonFiVolume;
+  const volume24h = gt?.volume24h || (deDustVol + stonFiVol) || STATIC.volume24h;
+
+  const marketCap = gt?.marketCap || price * 1_000_000_000 || STATIC.marketCap;
+  const priceChange24h = gt?.priceChange24h ?? 0;
 
   const data = {
     price,
     marketCap,
     liquidity,
     volume24h,
-    priceChange24h: 0,
-    holders: ton?.holders ?? STATIC.holders,
+    priceChange24h,
+    holders: ton?.holders || STATIC.holders,
     symbol: ton?.symbol ?? STATIC.symbol,
     logoUrl: ton?.logoUrl ?? LOGO,
     xTrendLiq: STATIC.xTrendLiq, xTrendVolume: STATIC.xTrendVolume,
-    deDustLiq, deDustVolume: dd?.volume24h ?? STATIC.deDustVolume,
-    stonFiLiq, stonFiVolume: sf?.volume24h ?? STATIC.stonFiVolume,
+    deDustLiq,  deDustVolume: deDustVol,
+    stonFiLiq,  stonFiVolume: stonFiVol,
   };
 
   renderStats(data);
