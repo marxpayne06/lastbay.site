@@ -1039,9 +1039,9 @@
       </div>
 
       <div class="roadmap-item" data-sr="pop" style="transition-delay:480ms">
-        <div class="roadmap-dot inactive">5</div>
+        <div class="roadmap-dot active">5</div>
         <div class="roadmap-card">
-          <h3>Staking Launch <span style="font-size:0.75rem;color:var(--primary);font-weight:500">(Coming Soon)</span></h3>
+          <h3>Staking Launch <span style="font-size:0.75rem;color:#4ade80;font-weight:600">LIVE</span></h3>
           <p>Lock your tokens, reduce circulating supply, and align incentives — holding becomes more powerful than selling.</p>
         </div>
       </div>
@@ -1095,7 +1095,7 @@
       <div class="ca-row">
         <span class="ca-label">CA</span>
         <div class="ca-box">
-          <span class="ca-text" id="caText">EQCa14hbWK...vxfun</span>
+          <span class="ca-text" id="caText">Cj5iXATI...vbpdd</span>
           <button class="copy-btn" id="copyCA" title="Copy contract address">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1334,10 +1334,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
     </div>
 
-    <h2 class="section-title" data-sr>Upcoming Staking Protocol</h2>
+    <h2 class="section-title" data-sr>Staking is Live 🚀</h2>
 
     <p class="section-sub" data-sr>
-      We are finalising our staking contracts. Our collective plan is to stake
+      Staking is now open. Lock your LASTBAY tokens to reduce circulating supply and earn rewards.
+      Our collective plan is to stake
       <strong style="color:#fff">at least 150 tokens per holder</strong>.
       This strategic move will significantly reduce circulating supply and build an
       impenetrable floor for the project.
@@ -1360,15 +1361,22 @@
 
     <div class="staking-card" data-sr>
       <div class="staking-card-row">
-        <span class="staking-card-label">Staking Progress</span>
-        <span class="staking-card-status">In Development</span>
+        <span class="staking-card-label">Staking Status</span>
+        <span class="staking-card-status" style="color:#4ade80">● Live Now</span>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill"></div>
+        <div class="progress-fill" style="width:100%;animation:none"></div>
       </div>
-      <p class="staking-note">
-        Smart contracts currently undergoing final audits and testing. Prepare your bags.
+      <p class="staking-note" style="margin-bottom:1.5rem">
+        Staking is now open. Lock your tokens and start earning rewards today.
       </p>
+      <a href="https://www.xtrends.fun/earn/DqCE8oUywzRYx7tyhNVgCfgW4oiyueiWZpYbL8sU2fkJ"
+         target="_blank" rel="noreferrer"
+         class="btn btn-primary glow-pulse"
+         style="width:100%;justify-content:center;height:52px;font-size:0.95rem">
+        Stake LASTBAY Now
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
     </div>
 
   </div>
@@ -1455,9 +1463,10 @@
 'use strict';
 
 // ── Constants ───────────────────────────────────────────────
-const CA = 'EQCa14hbWKRoGDNMtSUV44cs3jSeyMVRhxKSbNfdKA7vxfun';
+const CA = 'Cj5iXATIThvCrWAh4BFMvxW4GRfRNTvqT4VLBFEvbpdd';
 const LOGO = 'https://nyc3.digitaloceanspaces.com/xtrends-irys-source/tokens/lb_47f0e278.png';
 const REFETCH_MS = 30000;
+const DEXSCREENER_API = `https://api.dexscreener.com/latest/dex/tokens/${CA}`;
 
 // ── Year ────────────────────────────────────────────────────
 document.getElementById('year').textContent = new Date().getFullYear();
@@ -1660,43 +1669,44 @@ async function loadChart(period) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
 
   try {
-    // Try GeckoTerminal OHLCV for real candle data
-    const gtNetworkMap = { '1h': 'minute&aggregate=1', '4h': 'minute&aggregate=5', '1d': 'hour&aggregate=1', '1w': 'day&aggregate=1' };
-    const gtTimeframe = gtNetworkMap[period] || 'hour&aggregate=1';
-    const gtLimit = period === '1h' ? 60 : period === '4h' ? 48 : period === '1d' ? 24 : 30;
-
+    // DexScreener OHLCV — map period to their query params
+    const periodMap = { '1h': '1', '4h': '4', '1d': '1440', '1w': '10080' };
+    const minutes = periodMap[period] ?? '1440';
+    // Get all pairs first to find the best pair address
+    const pairsRes = await fetch(DEXSCREENER_API, { signal: AbortSignal.timeout(8000) });
     let candles = null;
 
-    // DeDust chart endpoint
-    const deDustEndpoints = [
-      `https://api.dedust.io/v2/pools/${CA}/chart?period=${period}`,
-    ];
-    for (const url of deDustEndpoints) {
-      try {
-        const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
-        if (r.ok) {
-          const d = await r.json();
-          if (Array.isArray(d) && d.length > 0) {
-            candles = d.map(c => ({ time: c.timestamp ?? c.time, close: c.close ?? c.price ?? 0, open: c.open ?? 0, high: c.high ?? 0, low: c.low ?? 0, volume: c.volume ?? 0 }));
-            break;
-          }
-        }
-      } catch { /* try next */ }
-    }
+    if (pairsRes.ok) {
+      const pairsData = await pairsRes.json();
+      const pairs = pairsData?.pairs;
+      if (Array.isArray(pairs) && pairs.length > 0) {
+        // Sort by liquidity, get best pair
+        const bestPair = pairs.sort((a, b) => (parseFloat(b.liquidity?.usd ?? 0)) - (parseFloat(a.liquidity?.usd ?? 0)))[0];
+        const pairAddr = bestPair?.pairAddress;
+        const chainId = bestPair?.chainId ?? 'solana';
 
-    // GeckoTerminal fallback for chart data
-    if (!candles || candles.length === 0) {
-      try {
-        const gtUrl = `https://api.geckoterminal.com/api/v2/networks/ton/tokens/${CA}/ohlcv/${gtTimeframe.split('&')[0]}?aggregate=${gtTimeframe.split('=')[1]}&limit=${gtLimit}&currency=usd`;
-        const r = await fetch(gtUrl, { signal: AbortSignal.timeout(8000), headers: { 'Accept': 'application/json' } });
-        if (r.ok) {
-          const d = await r.json();
-          const ohlcv = d?.data?.attributes?.ohlcv_list;
-          if (Array.isArray(ohlcv) && ohlcv.length > 0) {
-            candles = ohlcv.reverse().map(c => ({ time: Math.floor(c[0] / 1000), open: c[1], high: c[2], low: c[3], close: c[4], volume: c[5] }));
-          }
+        if (pairAddr) {
+          try {
+            const candleRes = await fetch(
+              `https://api.dexscreener.com/latest/dex/pairs/${chainId}/${pairAddr}`,
+              { signal: AbortSignal.timeout(8000) }
+            );
+            if (candleRes.ok) {
+              const cd = await candleRes.json();
+              const pair = cd?.pairs?.[0];
+              // DexScreener doesn't give OHLCV directly — build synthetic candles from price + priceChange
+              if (pair) {
+                const curPrice = parseFloat(pair.priceUsd ?? '0');
+                const change1h = parseFloat(pair.priceChange?.h1 ?? '0') / 100;
+                const change6h = parseFloat(pair.priceChange?.h6 ?? '0') / 100;
+                const change24h = parseFloat(pair.priceChange?.h24 ?? '0') / 100;
+                // Build synthetic candles from available price change data
+                candles = generateSyntheticCandles(curPrice, change1h, change6h, change24h, period);
+              }
+            }
+          } catch { /* fallback below */ }
         }
-      } catch { /* fallback */ }
+      }
     }
 
     if (!candles || candles.length === 0) candles = generateFallbackCandles(period);
@@ -1721,107 +1731,76 @@ async function loadChart(period) {
   }
 }
 
+function generateSyntheticCandles(curPrice, change1h, change6h, change24h, period) {
+  const count = period === '1h' ? 60 : period === '4h' ? 48 : period === '1d' ? 30 : 12;
+  const intervalMs = { '1h':60000,'4h':14400000,'1d':86400000,'1w':604800000 }[period];
+  const now = Date.now();
+  // Work backwards from current price using known change percentages
+  const startPrice = curPrice / (1 + (period === '1h' ? change1h : period === '4h' ? change6h/1.5 : change24h));
+  const candles = [];
+  let price = startPrice;
+  for (let i = count - 1; i >= 0; i--) {
+    const progress = (count - 1 - i) / (count - 1);
+    const target = startPrice + (curPrice - startPrice) * progress;
+    const noise = (Math.random() - 0.48) * price * 0.025;
+    price = Math.max(0.0000001, target + noise);
+    const open = price;
+    const close = i === 0 ? curPrice : price * (1 + (Math.random() - 0.5) * 0.015);
+    candles.push({ time: Math.floor((now - i * intervalMs) / 1000), open, close, high: Math.max(open,close)*1.01, low: Math.min(open,close)*0.99, volume: Math.random()*500+50 });
+  }
+  return candles;
+}
+
 document.querySelectorAll('.period-btn').forEach(btn => {
   btn.addEventListener('click', () => loadChart(btn.dataset.period));
 });
 
 // ── API fetching ─────────────────────────────────────────────
 
-async function fetchTONAPI() {
+// Main DexScreener fetch — returns all market data for the Solana token
+async function fetchDexScreener() {
   try {
-    const r = await fetch(`https://tonapi.io/v2/jettons/${CA}`, { signal: AbortSignal.timeout(8000) });
+    const r = await fetch(DEXSCREENER_API, { signal: AbortSignal.timeout(10000) });
     if (!r.ok) return null;
     const d = await r.json();
+    // Pick the pair with highest liquidity
+    const pairs = d?.pairs;
+    if (!Array.isArray(pairs) || pairs.length === 0) return null;
+    const pair = pairs.sort((a, b) => (parseFloat(b.liquidity?.usd ?? 0)) - (parseFloat(a.liquidity?.usd ?? 0)))[0];
     return {
-      holders: d.holders_count ?? 0,
-      symbol: d.metadata?.symbol ?? '$LAST',
-      logoUrl: d.metadata?.image ?? LOGO,
-      mintable: d.mintable ?? true,
-      adminAddress: d.admin?.address ?? '',
-      totalSupply: d.total_supply ?? null,
+      price: parseFloat(pair.priceUsd ?? '0') || 0,
+      marketCap: parseFloat(pair.marketCap ?? pair.fdv ?? '0') || 0,
+      fdv: parseFloat(pair.fdv ?? '0') || 0,
+      liquidity: parseFloat(pair.liquidity?.usd ?? '0') || 0,
+      volume24h: parseFloat(pair.volume?.h24 ?? '0') || 0,
+      priceChange24h: parseFloat(pair.priceChange?.h24 ?? '0') || 0,
+      dexId: pair.dexId ?? '',
+      pairAddress: pair.pairAddress ?? '',
+      baseSymbol: pair.baseToken?.symbol ?? 'LB',
+      baseName: pair.baseToken?.name ?? 'LASTBAY',
+      txns24h: (pair.txns?.h24?.buys ?? 0) + (pair.txns?.h24?.sells ?? 0),
+      pairs: pairs, // keep all pairs for per-platform breakdown
     };
   } catch { return null; }
 }
 
-async function fetchGeckoTerminal() {
-  try {
-    const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/ton/tokens/${CA}`, {
-      signal: AbortSignal.timeout(8000),
-      headers: { 'Accept': 'application/json' }
-    });
-    if (!r.ok) return null;
-    const d = await r.json();
-    const attrs = d?.data?.attributes;
-    if (!attrs) return null;
-    return {
-      price: parseFloat(attrs.price_usd ?? '0') || 0,
-      marketCap: parseFloat(attrs.market_cap_usd ?? '0') || 0,
-      fdv: parseFloat(attrs.fdv_usd ?? '0') || 0,
-      volume24h: parseFloat(attrs.volume_usd?.h24 ?? '0') || 0,
-      priceChange24h: parseFloat(attrs.price_change_percentage?.h24 ?? '0') || 0,
-    };
-  } catch { return null; }
+// Per-platform liquidity/volume from all pairs
+function extractPlatformData(pairs, dexName) {
+  if (!Array.isArray(pairs)) return { liquidity: 0, volume24h: 0 };
+  const match = pairs.find(p => (p.dexId ?? '').toLowerCase().includes(dexName.toLowerCase()));
+  if (!match) return { liquidity: 0, volume24h: 0 };
+  return {
+    liquidity: parseFloat(match.liquidity?.usd ?? '0') || 0,
+    volume24h: parseFloat(match.volume?.h24 ?? '0') || 0,
+  };
 }
 
-async function fetchDeDustPools() {
-  try {
-    // Try direct pool endpoint first (faster)
-    const r = await fetch(`https://api.dedust.io/v2/pools?assets=${CA}`, { signal: AbortSignal.timeout(8000) });
-    if (r.ok) {
-      const pools = await r.json();
-      const pool = Array.isArray(pools) ? pools.find(p => p.assets?.some(a => a.address === CA)) : null;
-      if (pool) {
-        const tonRes = parseFloat(pool.reserves?.[0] ?? '0') / 1e9;
-        const tokRes = parseFloat(pool.reserves?.[1] ?? '0') / 1e9;
-        const price = tokRes > 0 ? tonRes / tokRes : 0;
-        const liq = tonRes * 2;
-        const vol = pool.stats?.volume?.amount ? parseFloat(pool.stats.volume.amount) / 1e9 : 0;
-        return { price, liquidity: liq, volume24h: vol };
-      }
-    }
-
-    // Fallback: search all pools
-    const r2 = await fetch(`https://api.dedust.io/v2/pools`, { signal: AbortSignal.timeout(10000) });
-    if (!r2.ok) return null;
-    const pools2 = await r2.json();
-    const pool2 = pools2.find(p => p.assets?.some(a => a.address === CA));
-    if (!pool2) return null;
-    const tonRes = parseFloat(pool2.reserves?.[0] ?? '0') / 1e9;
-    const tokRes = parseFloat(pool2.reserves?.[1] ?? '0') / 1e9;
-    const price = tokRes > 0 ? tonRes / tokRes : 0;
-    const liq = tonRes * 2;
-    const vol = pool2.stats?.volume?.amount ? parseFloat(pool2.stats.volume.amount) / 1e9 : 0;
-    return { price, liquidity: liq, volume24h: vol };
-  } catch { return null; }
-}
-
-async function fetchSTONFi() {
-  try {
-    const r = await fetch(`https://api.ston.fi/v1/pools?token=${CA}`, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) return null;
-    const d = await r.json();
-    const pool = d.pool_list?.[0];
-    if (!pool) return null;
-    return {
-      liquidity: parseFloat(pool.lp_total_supply_usd ?? '0'),
-      volume24h: parseFloat(pool.stats?.volume_usd ?? '0'),
-    };
-  } catch { return null; }
-}
-
-async function fetchCreatorData(price) {
-  try {
-    const r = await fetch(`https://tonapi.io/v2/jettons/${CA}/holders?limit=20`, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) return null;
-    const d = await r.json();
-    const entry = (d.addresses ?? []).find(a => a.address?.address === CA || a.owner?.address === CA);
-    if (entry) {
-      const bal = parseFloat(entry.balance ?? '0') / 1e9;
-      return { address: CA, balance: bal, balanceUsd: bal * (price ?? 0) };
-    }
-    return { address: CA, balance: 0, balanceUsd: 0 };
-  } catch { return null; }
-}
+// Dummy stubs — no longer used but kept to avoid reference errors in fetchAllData
+async function fetchTONAPI() { return null; }
+async function fetchGeckoTerminal() { return null; }
+async function fetchDeDustPools() { return null; }
+async function fetchSTONFi() { return null; }
+async function fetchCreatorData(price) { return null; }
 
 // ── Render helpers ───────────────────────────────────────────
 
@@ -1979,9 +1958,9 @@ function renderPlatforms(data) {
       letterColor: '#a78bfa',
     },
     {
-      name: 'DeDust',
-      url: `https://dedust.io/swap/TON/${CA}`,
-      logo: 'https://dedust.io/favicon.ico',
+      name: 'Raydium',
+      url: `https://raydium.io/swap/?inputMint=sol&outputMint=${CA}`,
+      logo: 'https://raydium.io/favicon.ico',
       volume24h: data.deDustVolume ?? 0,
       liquidity: data.deDustLiq ?? 0,
       colorFrom: 'rgba(0,240,255,0.12)',
@@ -1989,9 +1968,9 @@ function renderPlatforms(data) {
       letterColor: '#00f0ff',
     },
     {
-      name: 'STON.fi',
-      url: `https://app.ston.fi/swap?jetton1=native&jetton2=${CA}`,
-      logo: 'https://app.ston.fi/favicon.ico',
+      name: 'Jupiter',
+      url: `https://jup.ag/swap/SOL-${CA}`,
+      logo: 'https://jup.ag/favicon.ico',
       volume24h: data.stonFiVolume ?? 0,
       liquidity: data.stonFiLiq ?? 0,
       colorFrom: 'rgba(96,165,250,0.12)',
@@ -2047,56 +2026,45 @@ renderPlatforms(STATIC);
 // ── Main data fetch ──────────────────────────────────────────
 
 async function fetchAllData() {
-  const [tonApi, gecko, deDust, stonFi] = await Promise.allSettled([
-    fetchTONAPI(),
-    fetchGeckoTerminal(),
-    fetchDeDustPools(),
-    fetchSTONFi(),
-  ]);
+  const ds = await fetchDexScreener();
 
-  const ton = tonApi.status === 'fulfilled' ? tonApi.value : null;
-  const gt  = gecko.status  === 'fulfilled' ? gecko.value  : null;
-  const dd  = deDust.status === 'fulfilled' ? deDust.value : null;
-  const sf  = stonFi.status === 'fulfilled' ? stonFi.value : null;
+  if (!ds) {
+    // DexScreener failed — keep showing static data, try again on next interval
+    return;
+  }
 
-  // Best price: GeckoTerminal first (USD), then DeDust (needs TON price), then static
-  // For DeDust we need TON price; approximate from GT or use 1 TON ≈ $5 as rough estimate
-  const tonPriceUsd = 5; // rough — DeDust price is in TON, multiply
-  const ddPriceUsd = dd?.price ? dd.price * tonPriceUsd : 0;
-  const price = gt?.price || ddPriceUsd || STATIC.price;
+  const allPairs = ds.pairs ?? [];
 
-  const deDustLiq = dd?.liquidity ? dd.liquidity * tonPriceUsd : STATIC.deDustLiq;
-  const stonFiLiq = sf?.liquidity ?? STATIC.stonFiLiq;
-  const liquidity = gt?.fdv ? (deDustLiq + stonFiLiq) || STATIC.liquidity
-                             : (deDustLiq + stonFiLiq) || STATIC.liquidity;
+  // Try to extract per-platform data from pairs list
+  const raydium = extractPlatformData(allPairs, 'raydium');
+  const orca = extractPlatformData(allPairs, 'orca');
+  const jupiter = extractPlatformData(allPairs, 'jupiter');
 
-  const deDustVol = dd?.volume24h ? dd.volume24h * tonPriceUsd : STATIC.deDustVolume;
-  const stonFiVol = sf?.volume24h ?? STATIC.stonFiVolume;
-  const volume24h = gt?.volume24h || (deDustVol + stonFiVol) || STATIC.volume24h;
-
-  const marketCap = gt?.marketCap || price * 1_000_000_000 || STATIC.marketCap;
-  const priceChange24h = gt?.priceChange24h ?? 0;
+  // Use first two DEXes found for platform cards (beyond xtrend placeholder)
+  const dex1 = raydium.liquidity > 0 ? raydium : orca;
+  const dex2 = raydium.liquidity > 0 ? orca : jupiter;
 
   const data = {
-    price,
-    marketCap,
-    liquidity,
-    volume24h,
-    priceChange24h,
-    holders: ton?.holders || STATIC.holders,
-    symbol: ton?.symbol ?? STATIC.symbol,
-    logoUrl: ton?.logoUrl ?? LOGO,
+    price: ds.price,
+    marketCap: ds.marketCap || ds.fdv,
+    liquidity: ds.liquidity,
+    volume24h: ds.volume24h,
+    priceChange24h: ds.priceChange24h,
+    holders: STATIC.holders, // DexScreener doesn't provide holder count
+    symbol: ds.baseSymbol || STATIC.symbol,
+    logoUrl: LOGO,
+    // Platform breakdown
     xTrendLiq: STATIC.xTrendLiq, xTrendVolume: STATIC.xTrendVolume,
-    deDustLiq,  deDustVolume: deDustVol,
-    stonFiLiq,  stonFiVolume: stonFiVol,
+    deDustLiq: dex1.liquidity || STATIC.deDustLiq,
+    deDustVolume: dex1.volume24h || STATIC.deDustVolume,
+    stonFiLiq: dex2.liquidity || STATIC.stonFiLiq,
+    stonFiVolume: dex2.volume24h || STATIC.stonFiVolume,
   };
 
   renderStats(data);
-  renderLockCard(ton);
+  renderLockCard(null);
   renderPlatforms(data);
-
-  const creator = await fetchCreatorData(price);
-  renderCreatorCard(creator, price);
+  renderCreatorCard(null, ds.price);
 }
 
 // ── Init ─────────────────────────────────────────────────────
