@@ -1095,7 +1095,7 @@
       <div class="ca-row">
         <span class="ca-label">CA</span>
         <div class="ca-box">
-          <span class="ca-text" id="caText">14hbWKRoGDNMtSUV44cs3jSeyMVRhxKSbNfdKA7vxfun</span>
+          <span class="ca-text" id="caText">Cj5iXA...vbpdd</span>
           <button class="copy-btn" id="copyCA" title="Copy contract address">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1243,8 +1243,12 @@
 
         <div class="tknomics-rows">
           <div class="tknomics-row">
+            <span class="tknomics-row-label">Price</span>
+            <span class="tknomics-row-val cyan" id="tkPrice">—</span>
+          </div>
+          <div class="tknomics-row">
             <span class="tknomics-row-label">Total Supply</span>
-            <span class="tknomics-row-val cyan" id="tkTotalSupply">1,000 LB</span>
+            <span class="tknomics-row-val cyan" id="tkTotalSupply">1,000 LAST</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Burned</span>
@@ -1252,15 +1256,19 @@
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Circulating Supply</span>
-            <span class="tknomics-row-val" id="tkCirculating">~463 LB</span>
+            <span class="tknomics-row-val" id="tkCirculating">~463 LAST</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Market Cap</span>
-            <span class="tknomics-row-val cyan" id="tkMcap">~$101K</span>
+            <span class="tknomics-row-val cyan" id="tkMcap">—</span>
+          </div>
+          <div class="tknomics-row">
+            <span class="tknomics-row-label">FDV</span>
+            <span class="tknomics-row-val" id="tkFdv">—</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Liquidity</span>
-            <span class="tknomics-row-val green" id="tkLiq">~$6.1K</span>
+            <span class="tknomics-row-val green" id="tkLiq">—</span>
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">Holders</span>
@@ -1268,7 +1276,7 @@
           </div>
           <div class="tknomics-row">
             <span class="tknomics-row-label">24h Volume</span>
-            <span class="tknomics-row-val cyan" id="tkVol">~$200+</span>
+            <span class="tknomics-row-val cyan" id="tkVol">—</span>
           </div>
         </div>
       </div>
@@ -1279,19 +1287,19 @@
           <div class="dist-bar-row">
             <div class="dist-bar-top">
               <span class="dist-bar-label">🔥 Burned</span>
-              <span class="dist-bar-pct" style="color:#f87171">~54%</span>
+              <span id="distBurnedPct" class="dist-bar-pct" style="color:#f87171">~54%</span>
             </div>
             <div class="dist-bar-track">
-              <div class="dist-bar-fill" style="width:54%;background:linear-gradient(90deg,#f87171,#fb923c)"></div>
+              <div id="distBurnedBar" class="dist-bar-fill" style="width:54%;background:linear-gradient(90deg,#f87171,#fb923c)"></div>
             </div>
           </div>
           <div class="dist-bar-row">
             <div class="dist-bar-top">
               <span class="dist-bar-label">💧 In Liquidity</span>
-              <span class="dist-bar-pct" style="color:var(--primary)">~34%</span>
+              <span id="distLiqPct" class="dist-bar-pct" style="color:var(--primary)">~34%</span>
             </div>
             <div class="dist-bar-track">
-              <div class="dist-bar-fill" style="width:34%;background:linear-gradient(90deg,#00f0ff,#0ea5e9)"></div>
+              <div id="distLiqBar" class="dist-bar-fill" style="width:34%;background:linear-gradient(90deg,#00f0ff,#0ea5e9)"></div>
             </div>
           </div>
           <div class="dist-bar-row">
@@ -1463,7 +1471,7 @@
 'use strict';
 
 // ── Constants ───────────────────────────────────────────────
-const CA = 'Cj5iXATIThvCrWAh4BFMvxW4GRfRNTvqT4VLBFEvbpdd';
+const CA = '14hbWKRoGDNMtSUV44cs3jSeyMVRhxKSbNfdKA7vxfun';
 const LOGO = 'https://nyc3.digitaloceanspaces.com/xtrends-irys-source/tokens/lb_47f0e278.png';
 const REFETCH_MS = 30000;
 const DEXSCREENER_API = `https://api.dexscreener.com/latest/dex/tokens/${CA}`;
@@ -1880,6 +1888,10 @@ function updateTokenomics(data) {
     const el = document.getElementById('tkMcap');
     if (el) el.textContent = fmtK(data.marketCap);
   }
+  if (data.fdv > 0) {
+    const el = document.getElementById('tkFdv');
+    if (el) el.textContent = fmtK(data.fdv);
+  }
   if (data.liquidity > 0) {
     const el = document.getElementById('tkLiq');
     if (el) el.textContent = fmtK(data.liquidity);
@@ -1891,6 +1903,35 @@ function updateTokenomics(data) {
   if (data.volume24h > 0) {
     const el = document.getElementById('tkVol');
     if (el) el.textContent = fmtK(data.volume24h);
+  }
+  // Supply data computed from DexScreener FDV / market cap
+  if (data.totalSupply > 0) {
+    const el = document.getElementById('tkTotalSupply');
+    if (el) el.textContent = Math.round(data.totalSupply).toLocaleString() + ' LAST';
+  }
+  if (data.circulatingSupply > 0) {
+    const el = document.getElementById('tkCirculating');
+    if (el) el.textContent = '~' + Math.round(data.circulatingSupply).toLocaleString() + ' LAST';
+  }
+  if (data.burnedPct > 0) {
+    const burnEl = document.getElementById('tkBurned');
+    if (burnEl) burnEl.textContent = '~' + data.burnedPct.toFixed(1) + '% 🔥';
+    const distPct = document.getElementById('distBurnedPct');
+    const distBar = document.getElementById('distBurnedBar');
+    const pct = Math.min(data.burnedPct, 99).toFixed(1);
+    if (distPct) distPct.textContent = '~' + Math.round(data.burnedPct) + '%';
+    if (distBar) distBar.style.width = pct + '%';
+  }
+  if (data.liqPct > 0) {
+    const distPct = document.getElementById('distLiqPct');
+    const distBar = document.getElementById('distLiqBar');
+    const pct = Math.min(data.liqPct, 99).toFixed(1);
+    if (distPct) distPct.textContent = '~' + Math.round(data.liqPct) + '%';
+    if (distBar) distBar.style.width = pct + '%';
+  }
+  if (data.price > 0) {
+    const el = document.getElementById('tkPrice');
+    if (el) el.textContent = fmtPrice(data.price);
   }
 }
 
@@ -2044,15 +2085,32 @@ async function fetchAllData() {
   const dex1 = raydium.liquidity > 0 ? raydium : orca;
   const dex2 = raydium.liquidity > 0 ? orca : jupiter;
 
+  const mc = ds.marketCap || ds.fdv || 0;
+  const fdv = ds.fdv || 0;
+  const price = ds.price || 0;
+  // Compute supply figures from on-chain FDV and market cap
+  const totalSupply = price > 0 && fdv > 0 ? fdv / price : 0;
+  const circulatingSupply = price > 0 && mc > 0 ? mc / price : 0;
+  const burnedSupply = totalSupply > 0 && circulatingSupply > 0 ? totalSupply - circulatingSupply : 0;
+  const burnedPct = totalSupply > 0 && burnedSupply > 0 ? (burnedSupply / totalSupply) * 100 : 0;
+  const liqPct = mc > 0 && ds.liquidity > 0 ? (ds.liquidity / mc) * 100 : 0;
+
   const data = {
-    price: ds.price,
-    marketCap: ds.marketCap || ds.fdv,
+    price,
+    marketCap: mc,
+    fdv,
     liquidity: ds.liquidity,
     volume24h: ds.volume24h,
     priceChange24h: ds.priceChange24h,
     holders: STATIC.holders, // DexScreener doesn't provide holder count
     symbol: ds.baseSymbol || STATIC.symbol,
     logoUrl: LOGO,
+    // Supply data
+    totalSupply,
+    circulatingSupply,
+    burnedSupply,
+    burnedPct,
+    liqPct,
     // Platform breakdown
     xTrendLiq: STATIC.xTrendLiq, xTrendVolume: STATIC.xTrendVolume,
     deDustLiq: dex1.liquidity || STATIC.deDustLiq,
