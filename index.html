@@ -739,7 +739,6 @@
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 0.875rem;
       transition: all 0.3s;
-      /* Fix: ensure number stays centred and not clipped */
       line-height: 1;
       font-family: 'Space Grotesk', system-ui, sans-serif;
     }
@@ -1378,7 +1377,7 @@
       <p class="staking-note" style="margin-bottom:1.5rem">
         Staking is now open. Lock your tokens and start earning rewards today.
       </p>
-      <a href="https://www.xtrends.fun/earn/DqCE8oUywzRYx7tyhNVgCfgW4oiyueiWZpYbL8sU2fkJ"
+      <a href="https://www.xtrends.fun/earn/8T6bMhVhuZo7ST4oYTVC6RY67z6Esxxc3scBhAaZMXs2"
          target="_blank" rel="noreferrer"
          class="btn btn-primary glow-pulse"
          style="width:100%;justify-content:center;height:52px;font-size:0.95rem">
@@ -1677,10 +1676,8 @@ async function loadChart(period) {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
 
   try {
-    // DexScreener OHLCV — map period to their query params
     const periodMap = { '1h': '1', '4h': '4', '1d': '1440', '1w': '10080' };
     const minutes = periodMap[period] ?? '1440';
-    // Get all pairs first to find the best pair address
     const pairsRes = await fetch(DEXSCREENER_API, { signal: AbortSignal.timeout(8000) });
     let candles = null;
 
@@ -1688,7 +1685,6 @@ async function loadChart(period) {
       const pairsData = await pairsRes.json();
       const pairs = pairsData?.pairs;
       if (Array.isArray(pairs) && pairs.length > 0) {
-        // Sort by liquidity, get best pair
         const bestPair = pairs.sort((a, b) => (parseFloat(b.liquidity?.usd ?? 0)) - (parseFloat(a.liquidity?.usd ?? 0)))[0];
         const pairAddr = bestPair?.pairAddress;
         const chainId = bestPair?.chainId ?? 'solana';
@@ -1702,13 +1698,11 @@ async function loadChart(period) {
             if (candleRes.ok) {
               const cd = await candleRes.json();
               const pair = cd?.pairs?.[0];
-              // DexScreener doesn't give OHLCV directly — build synthetic candles from price + priceChange
               if (pair) {
                 const curPrice = parseFloat(pair.priceUsd ?? '0');
                 const change1h = parseFloat(pair.priceChange?.h1 ?? '0') / 100;
                 const change6h = parseFloat(pair.priceChange?.h6 ?? '0') / 100;
                 const change24h = parseFloat(pair.priceChange?.h24 ?? '0') / 100;
-                // Build synthetic candles from available price change data
                 candles = generateSyntheticCandles(curPrice, change1h, change6h, change24h, period);
               }
             }
@@ -1743,7 +1737,6 @@ function generateSyntheticCandles(curPrice, change1h, change6h, change24h, perio
   const count = period === '1h' ? 60 : period === '4h' ? 48 : period === '1d' ? 30 : 12;
   const intervalMs = { '1h':60000,'4h':14400000,'1d':86400000,'1w':604800000 }[period];
   const now = Date.now();
-  // Work backwards from current price using known change percentages
   const startPrice = curPrice / (1 + (period === '1h' ? change1h : period === '4h' ? change6h/1.5 : change24h));
   const candles = [];
   let price = startPrice;
@@ -1765,13 +1758,11 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 
 // ── API fetching ─────────────────────────────────────────────
 
-// Main DexScreener fetch — returns all market data for the Solana token
 async function fetchDexScreener() {
   try {
     const r = await fetch(DEXSCREENER_API, { signal: AbortSignal.timeout(10000) });
     if (!r.ok) return null;
     const d = await r.json();
-    // Pick the pair with highest liquidity
     const pairs = d?.pairs;
     if (!Array.isArray(pairs) || pairs.length === 0) return null;
     const pair = pairs.sort((a, b) => (parseFloat(b.liquidity?.usd ?? 0)) - (parseFloat(a.liquidity?.usd ?? 0)))[0];
@@ -1787,12 +1778,11 @@ async function fetchDexScreener() {
       baseSymbol: pair.baseToken?.symbol ?? 'LB',
       baseName: pair.baseToken?.name ?? 'LASTBAY',
       txns24h: (pair.txns?.h24?.buys ?? 0) + (pair.txns?.h24?.sells ?? 0),
-      pairs: pairs, // keep all pairs for per-platform breakdown
+      pairs: pairs,
     };
   } catch { return null; }
 }
 
-// Per-platform liquidity/volume from all pairs
 function extractPlatformData(pairs, dexName) {
   if (!Array.isArray(pairs)) return { liquidity: 0, volume24h: 0 };
   const match = pairs.find(p => (p.dexId ?? '').toLowerCase().includes(dexName.toLowerCase()));
@@ -1803,7 +1793,6 @@ function extractPlatformData(pairs, dexName) {
   };
 }
 
-// Dummy stubs — no longer used but kept to avoid reference errors in fetchAllData
 async function fetchTONAPI() { return null; }
 async function fetchGeckoTerminal() { return null; }
 async function fetchDeDustPools() { return null; }
@@ -1854,7 +1843,6 @@ function renderStats(data) {
     countUp(span, data.volume24h / div, 1400, 1, '$', suf);
   } else volEl.textContent = '—';
 
-  // Price change badge
   const badge = document.getElementById('priceChangeBadge');
   if (data.priceChange24h !== undefined && data.priceChange24h !== 0) {
     const up = data.priceChange24h >= 0;
@@ -1866,7 +1854,6 @@ function renderStats(data) {
     badge.style.display = 'inline-flex';
   }
 
-  // Holders
   if (data.holders > 0) {
     const pill = document.getElementById('holdersPill');
     const valEl = document.getElementById('holdersVal');
@@ -1874,12 +1861,9 @@ function renderStats(data) {
     countUp(valEl, data.holders, 1600, 0);
   }
 
-  // Token symbol
   if (data.symbol) document.getElementById('tokenSymbol').textContent = data.symbol;
-  // Logo
   if (data.logoUrl) document.getElementById('tokenLogo').src = data.logoUrl;
 
-  // Update tokenomics section with live data
   updateTokenomics(data);
 }
 
@@ -1904,7 +1888,6 @@ function updateTokenomics(data) {
     const el = document.getElementById('tkVol');
     if (el) el.textContent = fmtK(data.volume24h);
   }
-  // Supply data computed from DexScreener FDV / market cap
   if (data.totalSupply > 0) {
     const el = document.getElementById('tkTotalSupply');
     if (el) el.textContent = Math.round(data.totalSupply).toLocaleString() + ' LAST';
@@ -2070,25 +2053,21 @@ async function fetchAllData() {
   const ds = await fetchDexScreener();
 
   if (!ds) {
-    // DexScreener failed — keep showing static data, try again on next interval
     return;
   }
 
   const allPairs = ds.pairs ?? [];
 
-  // Try to extract per-platform data from pairs list
   const raydium = extractPlatformData(allPairs, 'raydium');
   const orca = extractPlatformData(allPairs, 'orca');
   const jupiter = extractPlatformData(allPairs, 'jupiter');
 
-  // Use first two DEXes found for platform cards (beyond xtrend placeholder)
   const dex1 = raydium.liquidity > 0 ? raydium : orca;
   const dex2 = raydium.liquidity > 0 ? orca : jupiter;
 
   const mc = ds.marketCap || ds.fdv || 0;
   const fdv = ds.fdv || 0;
   const price = ds.price || 0;
-  // Compute supply figures from on-chain FDV and market cap
   const totalSupply = price > 0 && fdv > 0 ? fdv / price : 0;
   const circulatingSupply = price > 0 && mc > 0 ? mc / price : 0;
   const burnedSupply = totalSupply > 0 && circulatingSupply > 0 ? totalSupply - circulatingSupply : 0;
@@ -2102,16 +2081,14 @@ async function fetchAllData() {
     liquidity: ds.liquidity,
     volume24h: ds.volume24h,
     priceChange24h: ds.priceChange24h,
-    holders: STATIC.holders, // DexScreener doesn't provide holder count
+    holders: STATIC.holders,
     symbol: ds.baseSymbol || STATIC.symbol,
     logoUrl: LOGO,
-    // Supply data
     totalSupply,
     circulatingSupply,
     burnedSupply,
     burnedPct,
     liqPct,
-    // Platform breakdown
     xTrendLiq: STATIC.xTrendLiq, xTrendVolume: STATIC.xTrendVolume,
     deDustLiq: dex1.liquidity || STATIC.deDustLiq,
     deDustVolume: dex1.volume24h || STATIC.deDustVolume,
@@ -2126,7 +2103,6 @@ async function fetchAllData() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-// Show holders pill immediately
 const _pill = document.getElementById('holdersPill');
 const _hval = document.getElementById('holdersVal');
 if (_pill && _hval) { _pill.style.display = 'inline-flex'; _hval.textContent = '48'; }
@@ -2134,7 +2110,6 @@ if (_pill && _hval) { _pill.style.display = 'inline-flex'; _hval.textContent = '
 fetchAllData();
 loadChart('1d');
 
-// Auto-refresh every 30s
 setInterval(fetchAllData, REFETCH_MS);
 setInterval(() => loadChart(currentPeriod), REFETCH_MS);
 </script>
